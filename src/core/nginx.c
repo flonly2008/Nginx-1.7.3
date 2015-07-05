@@ -215,6 +215,8 @@ main(int argc, char *const *argv)
 	*/
     ngx_debug_init();
 
+	
+	
     if (ngx_strerror_init() != NGX_OK) {
         return 1;
     }
