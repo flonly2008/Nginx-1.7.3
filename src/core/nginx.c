@@ -206,6 +206,13 @@ main(int argc, char *const *argv)
     ngx_cycle_t      *cycle, init_cycle;
     ngx_core_conf_t  *ccf;
 
+	/* 
+	 * 区分操作系统的debug 参数初始化
+	 * darwin :
+	 * 		1.MallocScribble
+	 * freebsd:
+	 *     1.MALLOC_OPTIONS
+	*/
     ngx_debug_init();
 
     if (ngx_strerror_init() != NGX_OK) {
