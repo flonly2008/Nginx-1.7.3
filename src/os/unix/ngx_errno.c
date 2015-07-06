@@ -42,6 +42,8 @@ ngx_strerror(ngx_err_t err, u_char *errstr, size_t size)
 }
 
 
+//重新定义错误码
+//READMORE
 ngx_int_t
 ngx_strerror_init(void)
 {
@@ -55,6 +57,7 @@ ngx_strerror_init(void)
      * malloc() is used and possible errors are logged using strerror().
      */
 
+	//NGX_SYS_NERR 最大错误码来自autoconf
     len = NGX_SYS_NERR * sizeof(ngx_str_t);
 
     ngx_sys_errlist = malloc(len);

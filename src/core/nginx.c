@@ -206,7 +206,7 @@ main(int argc, char *const *argv)
     ngx_cycle_t      *cycle, init_cycle;
     ngx_core_conf_t  *ccf;
 
-	/* 
+	/* 1.
 	 * 区分操作系统的debug 参数初始化
 	 * darwin :
 	 * 		1.MallocScribble
@@ -216,11 +216,12 @@ main(int argc, char *const *argv)
     ngx_debug_init();
 
 	
-	
+	//2,错误初始化
     if (ngx_strerror_init() != NGX_OK) {
         return 1;
     }
 
+	//3.命令行参数处理
     if (ngx_get_options(argc, argv) != NGX_OK) {
         return 1;
     }
@@ -673,6 +674,15 @@ ngx_exec_new_binary(ngx_cycle_t *cycle, char *const *argv)
 }
 
 
+//nginx 命令行启动参数
+//原始的字符串分析,保存简单的配置参数到全局变量中
+//1.ngx_show_version
+//2.ngx_show_help
+//3.ngx_test_config
+//4.ngx_quiet_mode
+//5.ngx_prefix
+//6.ngx_conf_params
+//7.ngx_signal
 static ngx_int_t
 ngx_get_options(int argc, char *const *argv)
 {
