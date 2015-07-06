@@ -279,19 +279,26 @@ main(int argc, char *const *argv)
 
     /* TODO */ ngx_max_sockets = -1;
 
+	//4.ngx 时间系统初始化
+	//READMORE
     ngx_time_init();
 
+	//5.ngx 正则初始化 READMORE
 #if (NGX_PCRE)
     ngx_regex_init();
 #endif
 
+	//6.ngx_pid (master) 获取 READMORE
     ngx_pid = ngx_getpid();
 
+	//7.ngx 日志初始化
     log = ngx_log_init(ngx_prefix);
     if (log == NULL) {
         return 1;
     }
 
+	
+	//8.ngx ssl 初始化 READMORE
     /* STUB */
 #if (NGX_OPENSSL)
     ngx_ssl_init(log);
@@ -683,6 +690,7 @@ ngx_exec_new_binary(ngx_cycle_t *cycle, char *const *argv)
 //5.ngx_prefix
 //6.ngx_conf_params
 //7.ngx_signal
+//8.ngx_show_configure
 static ngx_int_t
 ngx_get_options(int argc, char *const *argv)
 {
