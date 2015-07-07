@@ -87,7 +87,7 @@ struct ngx_command_s {
 #define ngx_null_command  { ngx_null_string, 0, NULL, 0, 0, NULL }
 
 
-struct ngx_open_file_s {
+struct ngx_open_file_s {  //READMORE
     ngx_fd_t              fd;
     ngx_str_t             name;
 

@@ -282,7 +282,18 @@ ngx_log_errno(u_char *buf, u_char *last, ngx_err_t err)
     return buf;
 }
 
-
+/**
+ *  nginx 日志系统初始化
+ *  使用文件范围(ngx_log.c)变量ngx_log_file初始化
+ *  本文件范围变量ngx_log,来记录系统错误日志
+ *  日志路径如果不是绝对的,则使用prefix 作为日志目录
+ * 	前缀.
+ *  如果没有指定日志目录,则使用系统标准错误
+ *  prefix的取值,优先去参数prefix(来自main 的-p 参数)
+	再取NGX_PREFIX (来自autoconf,既编译是configure
+	指定
+ *  
+ */
 ngx_log_t *
 ngx_log_init(u_char *prefix)
 {
@@ -291,7 +302,9 @@ ngx_log_init(u_char *prefix)
 
     ngx_log.file = &ngx_log_file;
     ngx_log.log_level = NGX_LOG_NOTICE;
-
+	
+	//ngx_auto_conf.h 
+	//#define NGX_ERROR_LOG_PATH  "logs/error.log"
     name = (u_char *) NGX_ERROR_LOG_PATH;
 
     /*
@@ -309,16 +322,16 @@ ngx_log_init(u_char *prefix)
     p = NULL;
 
 #if (NGX_WIN32)
-    if (name[1] != ':') {
+    if (name[1] != ':') { //windows 据对目录开始
 #else
-    if (name[0] != '/') {
+    if (name[0] != '/') { //linux 绝对路径开始
 #endif
 
-        if (prefix) {
+        if (prefix) {   //使用nginx 的启动-p 参数作为前缀
             plen = ngx_strlen(prefix);
 
         } else {
-#ifdef NGX_PREFIX
+#ifdef NGX_PREFIX		//或者使用nginx 编译时指定的NGX_PREFIX (在 ngx_auto_config.h中)
             prefix = (u_char *) NGX_PREFIX;
             plen = ngx_strlen(prefix);
 #else
@@ -334,7 +347,7 @@ ngx_log_init(u_char *prefix)
 
             p = ngx_cpymem(name, prefix, plen);
 
-            if (!ngx_path_separator(*(p - 1))) {
+            if (!ngx_path_separator(*(p - 1))) {  //prefix 的末尾以'/'结束
                 *p++ = '/';
             }
 
@@ -343,7 +356,9 @@ ngx_log_init(u_char *prefix)
             p = name;
         }
     }
-
+	
+	//使用错误日志文件,(默认logs/error.log),则以创建\追加的方式打开该文件
+	//如果打开文件失败则依旧使用错误日志
     ngx_log_file.fd = ngx_open_file(name, NGX_FILE_APPEND,
                                     NGX_FILE_CREATE_OR_OPEN,
                                     NGX_FILE_DEFAULT_ACCESS);
@@ -361,7 +376,8 @@ ngx_log_init(u_char *prefix)
         ngx_log_file.fd = ngx_stderr;
     }
 
-    if (p) {
+	//释放掉错误日志的路径名,并没有保存再ngx_log_file.name中 READMORE??
+    if (p) {  
         ngx_free(p);
     }
 

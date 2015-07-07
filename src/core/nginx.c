@@ -311,8 +311,13 @@ main(int argc, char *const *argv)
 
     ngx_memzero(&init_cycle, sizeof(ngx_cycle_t));
     init_cycle.log = log;
+	
+	//ngx_cycle.c 中的全局变量ngx_cycle指向main函数的局部
+	//变量ngx_cycle
     ngx_cycle = &init_cycle;
-
+	
+	//9.ngx cycle 初始化
+	//9.1 创建 ngx_cycle 的内存池
     init_cycle.pool = ngx_create_pool(1024, log);
     if (init_cycle.pool == NULL) {
         return 1;
