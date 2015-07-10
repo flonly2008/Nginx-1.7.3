@@ -48,12 +48,17 @@ ngx_calloc(size_t size, ngx_log_t *log)
 
 #if (NGX_HAVE_POSIX_MEMALIGN)
 
+
+
+/**
+ * 申请按 alignment 对齐的内存空间
+ */
 void *
 ngx_memalign(size_t alignment, size_t size, ngx_log_t *log)
 {
     void  *p;
     int    err;
-
+	
     err = posix_memalign(&p, alignment, size);
 
     if (err) {

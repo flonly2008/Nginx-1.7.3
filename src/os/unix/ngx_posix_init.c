@@ -28,14 +28,31 @@ ngx_os_io_t ngx_os_io = {
     0
 };
 
-
+/**
+ * 操作系统相关初始化
+ *
+ */
 ngx_int_t
 ngx_os_init(ngx_log_t *log)
 {
     ngx_uint_t  n;
-
+	/*auto_conf_config.h 会包含:
+	 *NGX_FREEBSD,NGX_LINUX,NGX_SOLARIS,NGX_DARWIN,NGX_WIN32
+	 * nginx.conf 文件会根据上面的定义引入:
+	 * 		ngx_freebsd_config.h
+	 * 		ngx_linux_config.h
+	 * 		ngx_solaris_config.h
+	 * 		ngx_darwin_config.h
+	 * 		ngx_win32_config.h
+	 * 		ngx_posix_config.h (未定义,则默认用posix)
+	 * 		
+	 * 		
+	 * 		NGX_HAVE_OS_SPECIFIC_INIT 在darwin , freebsd, linux, solaris 里面定义为1
+	 * 		作不同操作系统相关初始化
+	 *   	ngx_os_specific_init 函数会定义在相应操作系统的.c文件中,比如ngx_os_darwin_init.c
+	 */
 #if (NGX_HAVE_OS_SPECIFIC_INIT)
-    if (ngx_os_specific_init(log) != NGX_OK) {
+    if (ngx_os_specific_init(log) != NGX_OK) { //READMORE (里面)
         return NGX_ERROR;
     }
 #endif

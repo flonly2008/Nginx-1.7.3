@@ -317,20 +317,24 @@ main(int argc, char *const *argv)
     ngx_cycle = &init_cycle;
 	
 	//9.ngx cycle 初始化
-	//9.1 创建 ngx_cycle 的内存池
+	//9.1 创建 ngx_cycle 的内存池,创建一块1024大小,16字节对齐
+	//的内存池
     init_cycle.pool = ngx_create_pool(1024, log);
     if (init_cycle.pool == NULL) {
         return 1;
     }
-
+	
+	//保存命令行参数
     if (ngx_save_argv(&init_cycle, argc, argv) != NGX_OK) {
         return 1;
     }
-
+	
+	//处理命令行参数,主要是conf 配置路径,和conf的命令行参数
     if (ngx_process_options(&init_cycle) != NGX_OK) {
         return 1;
     }
 
+	//操作系统相关初始化
     if (ngx_os_init(log) != NGX_OK) {
         return 1;
     }
@@ -818,7 +822,9 @@ ngx_get_options(int argc, char *const *argv)
     return NGX_OK;
 }
 
-
+//保存命令行参数到全局变量中
+//argv--> ngx_argv
+//argc--->ngx_argc
 static ngx_int_t
 ngx_save_argv(ngx_cycle_t *cycle, int argc, char *const *argv)
 {
@@ -854,23 +860,32 @@ ngx_save_argv(ngx_cycle_t *cycle, int argc, char *const *argv)
     ngx_argv[i] = NULL;
 
 #endif
-
+	
+	// ISBUG?? environ 哪里初始化?
     ngx_os_environ = environ;
 
     return NGX_OK;
 }
 
 
+/**
+ * 1.ngx_prefix 的参数源优先级,  1>命令行参数-p,  2>预定义值NGX_PREFIX, 3>PWD
+ * 2.ngx_conf_file 参数源优先级: 1>命令行参数-c, 2>预定义值,NGX_CONF_PATH
+ * 3.将命令行参数-g 保存到cycle->conf_param
+ * 4.如果是测试配置文件,则将cycle->log->log_level 强制设置成NGX_LOG_INFO
+ */
 static ngx_int_t
 ngx_process_options(ngx_cycle_t *cycle)
 {
     u_char  *p;
     size_t   len;
-
+	
+	//1.保存ngx_prefix 到cycle->prefix 和 cycle->conf_prefix
     if (ngx_prefix) {
         len = ngx_strlen(ngx_prefix);
         p = ngx_prefix;
-
+		
+		//如果ngx_prefix 不是以'/' 结尾,则重新分配内存,在末尾添加'/'
         if (len && !ngx_path_separator(p[len - 1])) {
             p = ngx_pnalloc(cycle->pool, len + 1);
             if (p == NULL) {
@@ -886,10 +901,10 @@ ngx_process_options(ngx_cycle_t *cycle)
         cycle->prefix.len = len;
         cycle->prefix.data = p;
 
-    } else {
+    } else { //如果命令行没有穿-p参数,则使用默认的宏定义值
 
 #ifndef NGX_PREFIX
-
+		//没有定义NGX_PREFIX的情况下,使用PWD作为prefix
         p = ngx_pnalloc(cycle->pool, NGX_MAX_PATH);
         if (p == NULL) {
             return NGX_ERROR;
@@ -911,28 +926,38 @@ ngx_process_options(ngx_cycle_t *cycle)
 
 #else
 
+		// conf_prefix 优先使用 NGX_CONF_PREFIX,
+		// 没有定义则使用 NGX_PREFIX
 #ifdef NGX_CONF_PREFIX
         ngx_str_set(&cycle->conf_prefix, NGX_CONF_PREFIX);
 #else
         ngx_str_set(&cycle->conf_prefix, NGX_PREFIX);
 #endif
+		//使用预定义的NGX_PREFIX
         ngx_str_set(&cycle->prefix, NGX_PREFIX);
 
 #endif
     }
 
-    if (ngx_conf_file) {
+	//ngx_conf_file 参数源优先级: 1>命令行参数-c, 2>预定义值,NGX_CONF_PATH
+    if (ngx_conf_file) { //来自命令行参数-c
         cycle->conf_file.len = ngx_strlen(ngx_conf_file);
         cycle->conf_file.data = ngx_conf_file;
 
     } else {
         ngx_str_set(&cycle->conf_file, NGX_CONF_PATH);
     }
-
+	
+	//将ngx_conf_file的文件名编程绝对路径
     if (ngx_conf_full_name(cycle, &cycle->conf_file, 0) != NGX_OK) {
         return NGX_ERROR;
     }
-
+	
+	
+	//将cycle->conf_prefix 修正为 conf_file的父级目录.
+	//比如原来prefix = /var/nginx/   conf_file=conf/nginx.conf
+	//在ngx_conf_full_name 处理完后 conf_file=/var/nginx/conf/nginx.conf
+	//则,这里将cycle->conf_prefix 变为 /var/nginx/conf/
     for (p = cycle->conf_file.data + cycle->conf_file.len - 1;
          p > cycle->conf_file.data;
          p--)
@@ -943,19 +968,20 @@ ngx_process_options(ngx_cycle_t *cycle)
             break;
         }
     }
-
+	
+	//将命令行参数-g 保存到cycle->conf_param
     if (ngx_conf_params) {
         cycle->conf_param.len = ngx_strlen(ngx_conf_params);
         cycle->conf_param.data = ngx_conf_params;
     }
 
+	//如果是测试配置文件,则将cycle->log->log_level 强制设置成NGX_LOG_INFO;
     if (ngx_test_config) {
         cycle->log->log_level = NGX_LOG_INFO;
     }
 
     return NGX_OK;
 }
-
 
 static void *
 ngx_core_module_create_conf(ngx_cycle_t *cycle)
