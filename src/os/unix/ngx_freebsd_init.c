@@ -95,7 +95,7 @@ ngx_debug_init(void)
 #endif
 }
 
-
+//sendfile,no_tcppush 只有在特定版本有效
 ngx_int_t
 ngx_os_specific_init(ngx_log_t *log)
 {

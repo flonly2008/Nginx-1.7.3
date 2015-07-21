@@ -29,6 +29,7 @@ static ngx_os_io_t ngx_solaris_io = {
 };
 
 
+//solaris 使用sysinfo 获取系统信息
 ngx_int_t
 ngx_os_specific_init(ngx_log_t *log)
 {

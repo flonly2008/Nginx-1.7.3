@@ -30,6 +30,8 @@ static ngx_os_io_t ngx_linux_io = {
 };
 
 
+
+//linux 使用uname 获取版本参数
 ngx_int_t
 ngx_os_specific_init(ngx_log_t *log)
 {

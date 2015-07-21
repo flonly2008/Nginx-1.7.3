@@ -85,14 +85,18 @@ ngx_debug_init(void)
 #endif
 }
 
-
+/**
+ * darwin os 相关初始化
+ */
 ngx_int_t
 ngx_os_specific_init(ngx_log_t *log)
 {
     size_t      size;
     ngx_err_t   err;
     ngx_uint_t  i;
-
+	
+	//获取操作系统类型:(Darwin)
+	//查看 man sysctlbyname
     size = sizeof(ngx_darwin_kern_ostype);
     if (sysctlbyname("kern.ostype", ngx_darwin_kern_ostype, &size, NULL, 0)
         == -1)
@@ -111,7 +115,8 @@ ngx_os_specific_init(ngx_log_t *log)
             ngx_darwin_kern_ostype[size - 1] = '\0';
         }
     }
-
+	
+	//获取操作系统发行版本
     size = sizeof(ngx_darwin_kern_osrelease);
     if (sysctlbyname("kern.osrelease", ngx_darwin_kern_osrelease, &size,
                      NULL, 0)
@@ -153,6 +158,7 @@ ngx_os_specific_init(ngx_log_t *log)
         return NGX_ERROR;
     }
 
+	//cpu 个数
     ngx_ncpu = ngx_darwin_hw_ncpu;
 
     if (ngx_darwin_kern_ipc_somaxconn > 32767) {
@@ -161,8 +167,10 @@ ngx_os_specific_init(ngx_log_t *log)
         return NGX_ERROR;
     }
 
+	//tcp_nodelay 和 tcp_nopush 一起支持
     ngx_tcp_nodelay_and_tcp_nopush = 1;
-
+	
+	//READMORE ngx_os_io
     ngx_os_io = ngx_darwin_io;
 
     return NGX_OK;
