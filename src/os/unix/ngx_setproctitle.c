@@ -27,6 +27,9 @@
  * parenthesis.
  */
 
+
+/** glic 全部变量 environ, 存储程序全局变量
+**/
 extern char **environ;
 
 static char *ngx_os_argv_last;
@@ -39,7 +42,7 @@ ngx_init_setproctitle(ngx_log_t *log)
     ngx_uint_t   i;
 
     size = 0;
-
+	
     for (i = 0; environ[i]; i++) {
         size += ngx_strlen(environ[i]) + 1;
     }

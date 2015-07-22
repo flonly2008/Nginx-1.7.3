@@ -324,17 +324,17 @@ main(int argc, char *const *argv)
         return 1;
     }
 	
-	//保存命令行参数
+	//10.保存命令行参数
     if (ngx_save_argv(&init_cycle, argc, argv) != NGX_OK) {
         return 1;
     }
 	
-	//处理命令行参数,主要是conf 配置路径,和conf的命令行参数
+	//11.处理命令行参数,主要是conf 配置路径,和conf的命令行参数
     if (ngx_process_options(&init_cycle) != NGX_OK) {
         return 1;
     }
 
-	//操作系统相关初始化
+	//12.操作系统相关初始化
     if (ngx_os_init(log) != NGX_OK) {
         return 1;
     }

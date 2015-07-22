@@ -36,6 +36,7 @@ ngx_int_t
 ngx_os_init(ngx_log_t *log)
 {
     ngx_uint_t  n;
+	//1.特定系统初始化
 	/*auto_conf_config.h 会包含:
 	 *NGX_FREEBSD,NGX_LINUX,NGX_SOLARIS,NGX_DARWIN,NGX_WIN32
 	 * nginx.conf 文件会根据上面的定义引入:
@@ -52,18 +53,27 @@ ngx_os_init(ngx_log_t *log)
 	 *   	ngx_os_specific_init 函数会定义在相应操作系统的.c文件中,比如ngx_os_darwin_init.c
 	 */
 #if (NGX_HAVE_OS_SPECIFIC_INIT)
-    if (ngx_os_specific_init(log) != NGX_OK) { //READMORE (里面)
+    if (ngx_os_specific_init(log) != NGX_OK) {
         return NGX_ERROR;
     }
 #endif
 
+	// 2.为set proc title 准备空间
+	//对linux 和 solaris, 将environ 拷贝到新内存, 为argv留出足够空间进行修改.
     ngx_init_setproctitle(log);
 
+	
+	//3.获取系统叶大小, cacheline大小
     ngx_pagesize = getpagesize();
+	
+	//cacheline size 来自autoconf
     ngx_cacheline_size = NGX_CPU_CACHE_LINE;
 
+	//4.计算页大小是2的多少次方,  2^ngx_pagesize_shift = ngx_cacheline_size
     for (n = ngx_pagesize; n >>= 1; ngx_pagesize_shift++) { /* void */ }
 
+	//5.矫正系统系统的cpu 个数 _SC_NPROCESSORS_ONLN 获取的是真实可用的cpu 核数,
+	//参考http://www.2cto.com/kf/201210/164480.html
 #if (NGX_HAVE_SC_NPROCESSORS_ONLN)
     if (ngx_ncpu == 0) {
         ngx_ncpu = sysconf(_SC_NPROCESSORS_ONLN);
@@ -74,8 +84,11 @@ ngx_os_init(ngx_log_t *log)
         ngx_ncpu = 1;
     }
 
+	//5.根据cpu 类型矫正ngx_cacheline_size
     ngx_cpuinfo();
 
+	//6.获取rlimit
+	//参考:http://www.cnblogs.com/niocai/archive/2012/04/01/2428128.html
     if (getrlimit(RLIMIT_NOFILE, &rlmt) == -1) {
         ngx_log_error(NGX_LOG_ALERT, log, errno,
                       "getrlimit(RLIMIT_NOFILE) failed)");
@@ -84,6 +97,7 @@ ngx_os_init(ngx_log_t *log)
 
     ngx_max_sockets = (ngx_int_t) rlmt.rlim_cur;
 
+	//7.READMORE
 #if (NGX_HAVE_INHERITED_NONBLOCK || NGX_HAVE_ACCEPT4)
     ngx_inherited_nonblocking = 1;
 #else
