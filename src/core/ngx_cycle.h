@@ -26,6 +26,8 @@ typedef struct ngx_shm_zone_s  ngx_shm_zone_t;
 
 typedef ngx_int_t (*ngx_shm_zone_init_pt) (ngx_shm_zone_t *zone, void *data);
 
+
+//READMORE
 struct ngx_shm_zone_s {
     void                     *data;
     ngx_shm_t                 shm;
@@ -44,8 +46,8 @@ struct ngx_cycle_s {
     ngx_uint_t                log_use_stderr;  /* unsigned  log_use_stderr:1; */
 
     ngx_connection_t        **files;
-    ngx_connection_t         *free_connections;
-    ngx_uint_t                free_connection_n;
+    ngx_connection_t         *free_connections;		//空连接
+    ngx_uint_t                free_connection_n;	//空连接数
 
     ngx_queue_t               reusable_connections_queue;
 

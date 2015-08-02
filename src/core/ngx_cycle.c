@@ -36,6 +36,7 @@ static ngx_connection_t  dumb;
 /* STUB */
 
 
+//READMORE init cycle 的作用
 ngx_cycle_t *
 ngx_init_cycle(ngx_cycle_t *old_cycle)
 {
@@ -55,6 +56,7 @@ ngx_init_cycle(ngx_cycle_t *old_cycle)
     ngx_core_module_t   *module;
     char                 hostname[NGX_MAXHOSTNAMELEN];
 
+	//1.时间区域更新
     ngx_timezone_update();
 
     /* force localtime update with a new timezone */
@@ -66,7 +68,8 @@ ngx_init_cycle(ngx_cycle_t *old_cycle)
 
 
     log = old_cycle->log;
-
+	
+	//2.新建cycle pool
     pool = ngx_create_pool(NGX_CYCLE_POOL_SIZE, log);
     if (pool == NULL) {
         return NULL;
@@ -83,13 +86,15 @@ ngx_init_cycle(ngx_cycle_t *old_cycle)
     cycle->log = log;
     cycle->old_cycle = old_cycle;
 
+	//3.拷贝old_cycle 的conf_prefix
     cycle->conf_prefix.len = old_cycle->conf_prefix.len;
     cycle->conf_prefix.data = ngx_pstrdup(pool, &old_cycle->conf_prefix);
     if (cycle->conf_prefix.data == NULL) {
         ngx_destroy_pool(pool);
         return NULL;
     }
-
+	
+	//4.拷贝old_cycle 的Prefix
     cycle->prefix.len = old_cycle->prefix.len;
     cycle->prefix.data = ngx_pstrdup(pool, &old_cycle->prefix);
     if (cycle->prefix.data == NULL) {
@@ -97,6 +102,7 @@ ngx_init_cycle(ngx_cycle_t *old_cycle)
         return NULL;
     }
 
+	//5.拷贝old_cycle 的 conf_file
     cycle->conf_file.len = old_cycle->conf_file.len;
     cycle->conf_file.data = ngx_pnalloc(pool, old_cycle->conf_file.len + 1);
     if (cycle->conf_file.data == NULL) {
@@ -106,6 +112,7 @@ ngx_init_cycle(ngx_cycle_t *old_cycle)
     ngx_cpystrn(cycle->conf_file.data, old_cycle->conf_file.data,
                 old_cycle->conf_file.len + 1);
 
+	//6.拷贝old_cycle的 conf_param
     cycle->conf_param.len = old_cycle->conf_param.len;
     cycle->conf_param.data = ngx_pstrdup(pool, &old_cycle->conf_param);
     if (cycle->conf_param.data == NULL) {
@@ -114,6 +121,8 @@ ngx_init_cycle(ngx_cycle_t *old_cycle)
     }
 
 
+	//7.拷贝 old_cycle 的 paths
+	// READMORE  paths 是什么？？？
     n = old_cycle->paths.nelts ? old_cycle->paths.nelts : 10;
 
     cycle->paths.elts = ngx_pcalloc(pool, n * sizeof(ngx_path_t *));
@@ -138,6 +147,7 @@ ngx_init_cycle(ngx_cycle_t *old_cycle)
         n = 20;
     }
 
+	//8.初始化打开文件列表
     if (ngx_list_init(&cycle->open_files, pool, n, sizeof(ngx_open_file_t))
         != NGX_OK)
     {
@@ -146,6 +156,8 @@ ngx_init_cycle(ngx_cycle_t *old_cycle)
     }
 
 
+	//9.拷初始化共享内存部分
+	// READMORE  shared_memory 的作用是什么
     if (old_cycle->shared_memory.part.nelts) {
         n = old_cycle->shared_memory.part.nelts;
         for (part = old_cycle->shared_memory.part.next; part; part = part->next)
@@ -164,6 +176,7 @@ ngx_init_cycle(ngx_cycle_t *old_cycle)
         return NULL;
     }
 
+	//10. 监听端口的初始化
     n = old_cycle->listening.nelts ? old_cycle->listening.nelts : 10;
 
     cycle->listening.elts = ngx_pcalloc(pool, n * sizeof(ngx_listening_t));
@@ -181,6 +194,7 @@ ngx_init_cycle(ngx_cycle_t *old_cycle)
     ngx_queue_init(&cycle->reusable_connections_queue);
 
 
+	//12.配置上下文conf_ctx 初始化
     cycle->conf_ctx = ngx_pcalloc(pool, ngx_max_module * sizeof(void *));
     if (cycle->conf_ctx == NULL) {
         ngx_destroy_pool(pool);
@@ -188,6 +202,8 @@ ngx_init_cycle(ngx_cycle_t *old_cycle)
     }
 
 
+	//13.保存hostname到 全局变量hostname，再拷贝到cycle->hostname
+	//   hostname 以小写的形式保存在cycle->hostname 里
     if (gethostname(hostname, NGX_MAXHOSTNAMELEN) == -1) {
         ngx_log_error(NGX_LOG_EMERG, log, ngx_errno, "gethostname() failed");
         ngx_destroy_pool(pool);
@@ -207,28 +223,32 @@ ngx_init_cycle(ngx_cycle_t *old_cycle)
 
     ngx_strlow(cycle->hostname.data, (u_char *) hostname, cycle->hostname.len);
 
-
+	//14. nginx 核心模块初始化
     for (i = 0; ngx_modules[i]; i++) {
+		// 只处理核心模块 [ http,event,conf,等]
         if (ngx_modules[i]->type != NGX_CORE_MODULE) {
             continue;
         }
 
         module = ngx_modules[i]->ctx;
 
+		//调用各个模块的create_conf 函数 来初始化各个模块
         if (module->create_conf) {
             rv = module->create_conf(cycle);
             if (rv == NULL) {
                 ngx_destroy_pool(pool);
                 return NULL;
             }
+			//在cycle->conf_ctc[module-index] 里记录module的上下文地址
             cycle->conf_ctx[ngx_modules[i]->index] = rv;
         }
     }
 
-
+	//15.保存环境变量 
     senv = environ;
 
 
+	//16.配置结构体conf 初始化
     ngx_memzero(&conf, sizeof(ngx_conf_t));
     /* STUB: init array ? */
     conf.args = ngx_array_create(pool, 10, sizeof(ngx_str_t));
@@ -243,7 +263,7 @@ ngx_init_cycle(ngx_cycle_t *old_cycle)
         return NULL;
     }
 
-
+	
     conf.ctx = cycle->conf_ctx;
     conf.cycle = cycle;
     conf.pool = pool;
@@ -251,6 +271,7 @@ ngx_init_cycle(ngx_cycle_t *old_cycle)
     conf.module_type = NGX_CORE_MODULE;
     conf.cmd_type = NGX_MAIN_CONF;
 
+	//what's a shit~~!!
 #if 0
     log->log_level = NGX_LOG_DEBUG_ALL;
 #endif
@@ -960,6 +981,9 @@ ngx_delete_pidfile(ngx_cycle_t *cycle)
 }
 
 
+/*
+ * 处理信号
+ */
 ngx_int_t
 ngx_signal_process(ngx_cycle_t *cycle, char *sig)
 {

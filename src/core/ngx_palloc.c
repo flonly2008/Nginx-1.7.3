@@ -150,7 +150,7 @@ ngx_palloc(ngx_pool_t *pool, size_t size)
     return ngx_palloc_large(pool, size);
 }
 
-
+//READMORE
 void *
 ngx_pnalloc(ngx_pool_t *pool, size_t size)
 {

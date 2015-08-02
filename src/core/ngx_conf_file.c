@@ -57,7 +57,9 @@ static ngx_uint_t argument_number[] = {
     NGX_CONF_TAKE7
 };
 
-
+/*
+ * 分析来自命令行的配置参数
+ */
 char *
 ngx_conf_param(ngx_conf_t *cf)
 {
@@ -82,6 +84,7 @@ ngx_conf_param(ngx_conf_t *cf)
     b.end = b.last;
     b.temporary = 1;
 
+	//将conf_params 临时放到cf->conf_file 里面 来分析
     conf_file.file.fd = NGX_INVALID_FILE;
     conf_file.file.name.data = NULL;
     conf_file.line = 0;
@@ -96,7 +99,12 @@ ngx_conf_param(ngx_conf_t *cf)
     return rv;
 }
 
-
+/*
+ * 配置解析，有三种类型
+ *  	1.文件
+ * 		2.块
+ *  	3.命令行参数
+ */
 char *
 ngx_conf_parse(ngx_conf_t *cf, ngx_str_t *filename)
 {
@@ -115,7 +123,7 @@ ngx_conf_parse(ngx_conf_t *cf, ngx_str_t *filename)
     fd = NGX_INVALID_FILE;
     prev = NULL;
 #endif
-
+	// READMORE 配置文件解析
     if (filename) {
 
         /* open configuration file */

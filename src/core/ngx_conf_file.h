@@ -154,9 +154,10 @@ typedef char *(*ngx_conf_handler_pt)(ngx_conf_t *cf,
     ngx_command_t *dummy, void *conf);
 
 
+//READMORE
 struct ngx_conf_s {
-    char                 *name;
-    ngx_array_t          *args;
+    char                 *name;			//名称  比如？？？
+    ngx_array_t          *args; 		//参数 
 
     ngx_cycle_t          *cycle;
     ngx_pool_t           *pool;

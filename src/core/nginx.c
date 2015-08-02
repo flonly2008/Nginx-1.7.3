@@ -347,15 +347,18 @@ main(int argc, char *const *argv)
         return 1;
     }
 
+	//14
     if (ngx_add_inherited_sockets(&init_cycle) != NGX_OK) {
         return 1;
     }
 
+	//15 初始化ngx_module -> index
     ngx_max_module = 0;
     for (i = 0; ngx_modules[i]; i++) {
         ngx_modules[i]->index = ngx_max_module++;
     }
 
+	//16.cycle 初始化
     cycle = ngx_init_cycle(&init_cycle);
     if (cycle == NULL) {
         if (ngx_test_config) {
@@ -366,6 +369,7 @@ main(int argc, char *const *argv)
         return 1;
     }
 
+	
     if (ngx_test_config) {
         if (!ngx_quiet_mode) {
             ngx_log_stderr(0, "configuration file %s test is successful",
@@ -375,12 +379,15 @@ main(int argc, char *const *argv)
         return 0;
     }
 
+	//17. 处理信号
     if (ngx_signal) {
         return ngx_signal_process(cycle, ngx_signal);
     }
 
+	//18. 
     ngx_os_status(cycle->log);
 
+	//19.记录初始化完成的cycle
     ngx_cycle = cycle;
 
     ccf = (ngx_core_conf_t *) ngx_get_conf(cycle->conf_ctx, ngx_core_module);
@@ -870,6 +877,7 @@ ngx_save_argv(ngx_cycle_t *cycle, int argc, char *const *argv)
 
 /**
  * 1.ngx_prefix 的参数源优先级,  1>命令行参数-p,  2>预定义值NGX_PREFIX, 3>PWD
+ * 2.ngx_conf_file 参数源优先级: 1>命令行参数-c, 2>预定义值,NGX_CONF_PATH
  * 2.ngx_conf_file 参数源优先级: 1>命令行参数-c, 2>预定义值,NGX_CONF_PATH
  * 3.将命令行参数-g 保存到cycle->conf_param
  * 4.如果是测试配置文件,则将cycle->log->log_level 强制设置成NGX_LOG_INFO

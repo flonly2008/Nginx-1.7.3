@@ -23,11 +23,11 @@ struct ngx_list_part_s {
 
 
 typedef struct {
-    ngx_list_part_t  *last;
+    ngx_list_part_t  *last;    // list 的结尾
     ngx_list_part_t   part;
-    size_t            size;
-    ngx_uint_t        nalloc;
-    ngx_pool_t       *pool;
+    size_t            size;    // list 的大小
+    ngx_uint_t        nalloc;  // list 内存大小
+    ngx_pool_t       *pool;    // list 所用的内存池
 } ngx_list_t;
 
 
